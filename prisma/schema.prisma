@@ -1,0 +1,31 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Document {
+  id          String         @id @default(cuid())
+  title       String
+  filename    String
+  content     String        @db.Text
+  chunks      DocumentChunk[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+}
+
+model DocumentChunk {
+  id          String    @id @default(cuid())
+  content     String    @db.Text
+  vectorId    String    // Qdrant vector ID
+  chunkIndex  Int
+  document    Document  @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  documentId  String
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([documentId])
+}

@@ -1,15 +1,15 @@
 services:
-  web:
-    build: .
-    ports:
-      - "3000:3000"
-    environment:
-      - DATABASE_URL=postgresql://admin:password123@postgres:5432/chatbot_db
-      - OLLAMA_API_URL=http://ollama:11434
-      - OLLAMA_MODEL=qwen:4b
-    depends_on:
-      ollama:
-        condition: service_healthy
+  # web:
+  #   build: .
+  #   ports:
+  #     - "3000:3000"
+  #   environment:
+  #     - DATABASE_URL=postgresql://admin:password123@postgres:5432/chatbot_db
+  #     - OLLAMA_API_URL=http://ollama:11434
+  #     - OLLAMA_MODEL=qwen:4b
+  #   depends_on:
+  #     ollama:
+  #       condition: service_healthy
 
   ollama:
     image: ollama/ollama:latest
@@ -17,16 +17,29 @@ services:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
+    environment:
+      - OLLAMA_BACKEND=cpu
+      - OLLAMA_MODEL=qwen:4b
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/api/health"]
+      test: [ "CMD", "curl", "-f", "http://localhost:11434/api/health" ]
       interval: 10s
       timeout: 5s
       retries: 5
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - capabilities: [gpu]
+
+  qdrant:
+    image: qdrant/qdrant
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT_ALLOW_CORS=true
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   postgres:
     image: postgres:15
@@ -52,3 +65,4 @@ services:
 volumes:
   postgres_data:
   ollama_data:
+  qdrant_data:
